@@ -13,7 +13,6 @@ class Node {
 class Tree {
   constructor(arr) {
     this.root = this.buildTree(arr, 0, arr.length - 1);
-    console.log(this.root);
   }
 
   buildTree(arr, start, end) {
@@ -21,7 +20,6 @@ class Tree {
     const mid = Math.trunc((start + end) / 2);
 
     const root = new Node(arr[mid]);
-    console.log(root);
 
     root.left = this.buildTree(arr, start, mid - 1);
     root.right = this.buildTree(arr, mid + 1, end);
@@ -73,6 +71,7 @@ class Tree {
     } else if (value > root.value) {
       root.right = this.deleteNode(root.right, value);
     } else {
+      // value === root.value
       // No child
       if (!root.left && !root.right) return null;
 
@@ -103,6 +102,119 @@ class Tree {
     }
     return root;
   }
+
+  find(value) {
+    let temp = this.root;
+    while (true) {
+      if (temp === null) return undefined;
+      if (value < temp.value) temp = temp.left;
+      else if (value > temp.value) temp = temp.right;
+      else return temp;
+    }
+  }
+
+  // Breadth-first level
+  levelOrder(arr = [], queue = [this.root]) {
+    if (queue.length === 0) return arr;
+
+    let store = [];
+    while (queue.length) {
+      let temp = queue.shift();
+      arr.push(temp.value);
+      if (temp.left) store.push(temp.left);
+      if (temp.right) store.push(temp.right);
+    }
+
+    return this.levelOrder(arr, store);
+  }
+
+  // Depth-first search
+  // LDR
+  inOrder() {
+    if (!this.root) return undefined;
+    let arr = [];
+
+    function traverse(curNode) {
+      if (curNode.left) traverse(curNode.left);
+      arr.push(curNode.value);
+      if (curNode.right) traverse(curNode.right);
+    }
+    traverse(this.root);
+
+    return arr;
+  }
+
+  // LRD
+  preOrder() {
+    if (!this.root) return undefined;
+    let arr = [];
+
+    function traverse(curNode) {
+      arr.push(curNode.value);
+      if (curNode.left) traverse(curNode.left);
+      if (curNode.right) traverse(curNode.right);
+    }
+    traverse(this.root);
+
+    return arr;
+  }
+
+  // DLR
+  postOrder() {
+    if (!this.root) return undefined;
+    let arr = [];
+
+    function traverse(curNode) {
+      if (curNode.left) traverse(curNode.left);
+      if (curNode.right) traverse(curNode.right);
+      arr.push(curNode.value);
+    }
+    traverse(this.root);
+
+    return arr;
+  }
+
+  height(node) {
+    if (node === undefined) return undefined;
+    if (node === null) return -1;
+
+    let left = this.height(node.left);
+    let right = this.height(node.right);
+
+    return Math.max(left, right) + 1;
+  }
+
+  depth(node, temp = this.root, count = 0) {
+    if (node === undefined) return undefined;
+
+    // Base case
+    if (node.value === temp.value) return count;
+
+    // Select
+    count++;
+    if (node.value < temp.value) temp = temp.left;
+    else temp = temp.right;
+
+    // Recursion case
+    return this.depth(node, temp, count);
+  }
+
+  isBalanced(node = this.root) {
+    if (node === null) return -1;
+
+    let left = this.isBalanced(node.left);
+    let right = this.isBalanced(node.right);
+
+    return node === this.root
+      ? Math.abs(left - right) <= 1
+      : Math.max(left, right) + 1;
+  }
+
+  rebalance(arr) {
+    const data = [...new Set(arr)];
+    const root = this.buildTree(data, 0, arr.length - 1);
+    return root;
+  }
 }
 
 function merge(arrA, arrB) {
@@ -128,6 +240,7 @@ function merge(arrA, arrB) {
 }
 
 function mergeSort(arr) {
+  arr = [...new Set(arr)]; // Remove Duplicate
   if (arr.length === 0) return [];
 
   // Base case
@@ -141,12 +254,23 @@ function mergeSort(arr) {
   return merge(mergeSort(left), mergeSort(right));
 }
 
-const myTree = new Tree([
-  ...new Set(mergeSort([1, 7, 4, 23, 8, 9, 4, 3, 5, 7, 9, 67, 6345, 324])),
-]); // remove duplicate values
+const myTree = new Tree(
+  mergeSort([1, 7, 4, 23, 8, 9, 4, 3, 5, 7, 9, 67, 6345, 324])
+);
 
 myTree.insert(28);
+myTree.insert(29);
+myTree.insert(30);
 myTree.delete(8);
+console.log(myTree.find(67)); // Node {value: 67, left: Node, right: Node}
+console.log(myTree.levelOrder()); //  [9, 4, 67, 1, 5, 23, 324, 3, 7, 28, 6345]
+console.log(myTree.inOrder()); // [1, 3, 4, 5, 7, 9, 23, 28, 67, 324, 6345]
+console.log(myTree.preOrder()); // [9, 4, 1, 3, 5, 7, 67, 23, 28, 324, 6345]
+console.log(myTree.postOrder()); // [3, 1, 7, 5, 4, 28, 23, 6345, 324, 67, 9]
+console.log(myTree.height(myTree.find(9))); // 4
+console.log(myTree.depth(myTree.find(23))); // 2
+console.log(myTree.isBalanced()); // false
+const reBalanceTree = myTree.rebalance(myTree.inOrder());
 
 const prettyPrint = (node, prefix = "", isLeft = true) => {
   if (node === null) return;
@@ -160,3 +284,4 @@ const prettyPrint = (node, prefix = "", isLeft = true) => {
     prettyPrint(node.left, `${prefix}${isLeft ? "    " : "│   "}`, true);
 };
 prettyPrint(myTree.root);
+prettyPrint(reBalanceTree);
